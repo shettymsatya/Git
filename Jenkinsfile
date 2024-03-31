@@ -3,7 +3,7 @@ pipeline {
 
     parameters{
       string(name: 'environment', defaultValue: 'terraform', description: 'workspace/main.tf')
-      booleanParams(name: 'autoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
+      booleanParam(name: 'autoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
     }
     environment {
         AWS_DEFAULT_REGION     = 'us-east-1' // Change to your desired region
