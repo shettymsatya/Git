@@ -12,33 +12,43 @@ pipeline {
     }
     
     stages {
-        stage('Checkout') {
+        stage('checkout') {
             steps {
-                checkout scm
-            }
-        }
-        
-        stage('Terraform Init') {
-            steps {
-                script {
-                    sh 'terraform init'
+                 script{
+                        dir("terraform")
+                        {
+                            git "https://github.com/shettymsatya/Git.git"
+                        }
+                    }
                 }
             }
-        }
-        
         stage('Terraform Plan') {
             steps {
-                script {
-                    sh 'terraform plan -out=tfplan'
+                    sh 'pwd;cd terraform/aws-instance-first-script ; terraform init -input=false'
+                    sh 'pwd;cd terraform/aws-instance-first-script ; terraform workspace new ${environment}'
+                    sh 'pwd;cd terraform/aws-instance-first-script ; terraform workspace select ${environment}'
+                    sh "pwd;cd terraform/aws-instance-first-script ;terraform plan -input=false -out tfplan "
+                    sh 'pwd;cd terraform/aws-instance-first-script ;terraform show -no-color tfplan > tfplan.txt'
                 }
-            }
+        }
+        stage('Approval') {
+           when {
+               not {
+                   equals expected: true, actual: params.autoApprove
+               }
+           }
+           steps {
+               script {
+                    def plan = readFile 'terraform/aws-instance-first-script/tfplan.txt'
+                    input message: "Do you want to apply the plan?",
+                    parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
+               }
+           }
         }
         
         stage('Terraform Apply') {
             steps {
-                script {
-                    sh 'terraform apply -auto-approve tfplan'
-                }
+                sh "pwd;cd terraform/Git ; terraform apply -input=false tfplan"
             }
         }
     }
